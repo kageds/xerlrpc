@@ -95,15 +95,17 @@ encode_param([]) ->
     [].
 
 encode(true) ->
-    {boolean, "1"};
+    {boolean, ["1"]};
 encode(false) ->
-    {boolean, "0"};
+    {boolean, ["0"]};
 encode(Value) when is_float(Value) ->
     {double, [float_to_list(Value)]};
 encode(Value) when is_integer(Value) ->
     {int, [integer_to_list(Value)]};
 encode({base64, Value}) when is_binary(Value) ->
     {base64, [binary_to_list(base64:encode(Value))]};
+encode(Value) when is_atom(Value) ->
+    {string, [atom_to_list(Value)]};
 encode(Value) when is_binary(Value) ->
     {string, [binary_to_list(Value)]};
 encode({{_Year, _Month, _Day}, {_Hour, _Min, _Sec}} = Value) ->
@@ -154,6 +156,13 @@ decode_xml(#xmlElement{name=struct, content=Content}) ->
     decode_xml_struct(Content);
 decode_xml(#xmlElement{name=value, content=[Content]}) ->
     decode_xml(Content);
+decode_xml(#xmlElement{name=boolean, content=[Content]}) ->
+    case decode_xml(Content) of
+        "1" ->
+            true;
+        "0" ->
+            false
+    end;
 decode_xml(#xmlElement{name=string,content=[Content]}) ->
     decode_xml(Content);
 decode_xml(#xmlElement{name=int,content=[Content]}) ->
