@@ -1,0 +1,4 @@
+[{<<"iso8601">>,
+  {git,"git@github.com:kivra/erlang_iso8601.git",
+       {ref,"01df22bd7d2567f8b2652e3ea14eebad8666bb34"}},
+  0}].
