@@ -60,8 +60,13 @@ encode_call_to_string(Name, Params) when is_list(Params), is_atom(Name) ->
 -spec decode_response_string(binary() | iolist()) 
                             -> decode_response().
 decode_response_string(Xml) when is_list(Xml) ->
+    io:format("~p~n", [Xml]),
     Acc = fun(#xmlElement{} = E, Acc, S) ->
                   {[E | Acc], S};
+             (#xmlText{value=" ", pos = P}, Acc, S) ->
+                  {Acc, P, S};
+             (#xmlText{value= "\n", pos = P}, Acc, S) ->
+                  {Acc, P, S};
              (#xmlText{parents=Parents, pos = P} = E, Acc, S) ->
                   {Parent, _} = hd(Parents),
                   Allowed = [name, string 
@@ -177,6 +182,10 @@ decode_xml(#xmlElement{name='dateTime.iso8601', content=[Content]}) ->
     iso8601:parse(decode_xml(Content));
 decode_xml(#xmlText{value=Value}) ->
     list_to_binary(Value);
+decode_xml([#xmlText{} = E | T]) ->
+    lists:foldl(fun(Elem, Acc) ->
+                        <<Acc/binary, Elem/binary>>
+                end, decode_xml(E), [ decode_xml(S) || S <- T]);
 decode_xml(#xmlElement{name=Name}) ->
     throw(Name);
 decode_xml([]) ->
