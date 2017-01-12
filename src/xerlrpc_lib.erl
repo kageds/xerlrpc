@@ -60,7 +60,6 @@ encode_call_to_string(Name, Params) when is_list(Params), is_atom(Name) ->
 -spec decode_response_string(binary() | iolist()) 
                             -> decode_response().
 decode_response_string(Xml) when is_list(Xml) ->
-    io:format("~p~n", [Xml]),
     Acc = fun(#xmlElement{} = E, Acc, S) ->
                   {[E | Acc], S};
              (#xmlText{value=" ", pos = P}, Acc, S) ->
