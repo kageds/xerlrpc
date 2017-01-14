@@ -112,14 +112,17 @@ encode(Value) when is_atom(Value) ->
     {string, [atom_to_list(Value)]};
 encode(Value) when is_binary(Value) ->
     {string, [binary_to_list(Value)]};
+encode(Struct) when is_map(Struct) ->
+    case maps:to_list(Struct) of
+        [] ->
+            {struct, ""};
+        L ->
+            encode(L)
+    end;
 encode({{_Year, _Month, _Day}, {_Hour, _Min, _Sec}} = Value) ->
     {'dateTime.iso8601', [binary_to_list(iso8601:format(Value))]};
 encode([{Name, _} = Value | Rest]) when not is_tuple(Name) ->
     {struct, [encode_member(Value) | encode_member(Rest)]};
-encode(Struct) when is_map(Struct) ->
-    encode(maps:to_list(Struct));
-encode([{}]) ->
-    {struct, [""]};
 encode(Values) when is_list(Values) ->
     {array, [{data, encode_data(Values)}]};
 encode([]) ->
@@ -167,7 +170,7 @@ decode_xml(#xmlElement{name=boolean, content=[Content]}) ->
         <<"0">> ->
             false
     end;
-decode_xml(#xmlElement{name=string,content=[Content]}) ->
+decode_xml(#xmlElement{name=string,content=Content}) ->
     decode_xml(Content);
 decode_xml(#xmlElement{name=int,content=[Content]}) ->
     binary_to_integer(decode_xml(Content));
@@ -186,7 +189,7 @@ decode_xml([#xmlText{} = E | T]) ->
                         <<Acc/binary, Elem/binary>>
                 end, decode_xml(E), [ decode_xml(S) || S <- T]);
 decode_xml(#xmlElement{name=Name}) ->
-    throw(Name);
+    throw({decode, {value, Name}});
 decode_xml([]) ->
     [].
 
